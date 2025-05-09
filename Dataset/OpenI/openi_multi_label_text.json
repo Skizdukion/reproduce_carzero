@@ -1,0 +1,56 @@
+{
+    "0": [
+        "There is Atelectasis"
+    ],
+    "1": [
+        "There is Cardiomegaly"
+    ],
+    "2": [
+        "There is Pleural Effusion"
+    ],
+    "3": [
+        "There is Lung Infiltration"
+    ],
+    "4": [
+        "There is Pulmonary Mass"
+    ],
+    "5": [
+        "There is Lung Nodule"
+    ],
+    "6": [
+        "There is Pneumonia"
+    ],
+    "7": [
+        "There is Pneumothorax"
+    ],
+    "8": [
+        "There is Pulmonary Edema"
+    ],
+    "9": [
+        "There is Pulmonary Emphysema"
+    ],
+    "10": [
+        "There is Pulmonary Fibrosis"
+    ],
+    "11": [
+        "There is Pleural Thickening"
+    ],
+    "12": [
+        "There is Hernia"
+    ],
+    "13": [
+        "There is Bone Fracture"
+    ],
+    "14": [
+        "There is Lung Opacity"
+    ],
+    "15": [
+        "There is Abnormal Lesion"
+    ],
+    "16": [
+        "There is Calcified Granuloma"
+    ],
+    "17": [
+        "There is Lung Granuloma"
+    ]
+}

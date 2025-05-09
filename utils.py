@@ -243,6 +243,9 @@ def split_list(lst, chunk_size):
         result.append(chunk)
     return result
 
+def random_element(lst, size):
+    assert size < len(lst), "Size > len(list)"
+    return np.random.choice(lst, size, replace=False)
 
 def count_parameters_in_million(model):
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)

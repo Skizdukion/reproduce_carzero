@@ -26,10 +26,10 @@ dependencies:
   - charset-normalizer=3.2.0
   - click=8.1.4
   - colorama=0.4.6
-  - conda=23.5.0
-  - conda-build=3.21.4
-  - conda-package-handling=2.0.2
-  - conda-package-streaming=0.8.0
+  # - conda=23.5.0
+  # - conda-build=3.21.4
+  # - conda-package-handling=2.0.2
+  # - conda-package-streaming=0.8.0
   - cryptography=41.0.2
   - cymem=2.0.7
   - cython-blis=0.7.9

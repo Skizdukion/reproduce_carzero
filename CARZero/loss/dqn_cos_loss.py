@@ -10,6 +10,7 @@ class DQNCOSLoss(nn.Module):
     def __init__(self):
         super(DQNCOSLoss, self).__init__()
 
+    # @Note: -- training flow
     def forward(self, input):
         batch_size = input.size(0)
         target = Variable(torch.LongTensor(range(batch_size))).to(input.device)

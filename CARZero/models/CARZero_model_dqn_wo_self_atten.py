@@ -54,7 +54,7 @@ class CARZeroDQNWOSA(nn.Module):
         return img_emb_l, img_emb_g
 
     def _calc_local_loss(self, img_emb_l, text_emb_l, sents):
-        
+
         # ipdb.set_trace()
         cap_lens = [
             len([w for w in sent if not w.startswith("[")]) + 1 for sent in sents
@@ -76,8 +76,11 @@ class CARZeroDQNWOSA(nn.Module):
     def _calc_ce_loss(self, cls):
         loss = self.ce_loss(cls)
         return loss
-    
-    def calc_loss(self, img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls):
+
+    # @Note: Training flow
+    def calc_loss(
+        self, img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls
+    ):
 
         # l_loss0, l_loss1, attn_maps = self._calc_local_loss(
         #     img_emb_l, text_emb_l, sents
@@ -96,6 +99,7 @@ class CARZeroDQNWOSA(nn.Module):
 
         return loss
 
+    # @Note: main training flow
     def forward(self, x):
 
         # img encoder branch
@@ -105,29 +109,30 @@ class CARZeroDQNWOSA(nn.Module):
         text_emb_l, text_emb_g, sents = self.text_encoder_forward(
             x["caption_ids"], x["attention_mask"], x["token_type_ids"]
         )
-        
 
-        img_emb_l_ = img_emb_l.view(img_emb_l.size(0), img_emb_l.size(1), -1) # [512, 768, 14, 14] -> [512, 768, 196]
+        img_emb_l_ = img_emb_l.view(
+            img_emb_l.size(0), img_emb_l.size(1), -1
+        )  # [512, 768, 14, 14] -> [512, 768, 196]
 
-        img_emb_l_ = img_emb_l_.permute(0, 2, 1) #patch_num b dim # [196, 512, 768]
+        img_emb_l_ = img_emb_l_.permute(0, 2, 1)  # patch_num b dim # [196, 512, 768]
 
-        #image_features (batch_size,patch_num,dim)
-        #text_features (query_num,dim)
-        # 
+        # image_features (batch_size,patch_num,dim)
+        # text_features (query_num,dim)
+        #
 
         i2t_cls = self.fusion_module(img_emb_l_, text_emb_g).squeeze(-1)
 
-        #pos=self.img_encoder.model.pos_embed[:, 1:, :].transpose(0,1)
+        # pos=self.img_encoder.model.pos_embed[:, 1:, :].transpose(0,1)
 
         # text to image
 
-        text_emb_l_ = text_emb_l.view(text_emb_l.size(0), text_emb_l.size(1), -1) 
+        text_emb_l_ = text_emb_l.view(text_emb_l.size(0), text_emb_l.size(1), -1)
 
-        text_emb_l_ = text_emb_l_.permute(0, 2, 1) #patch_num b dim # [97, 512, 768]
-        # 
+        text_emb_l_ = text_emb_l_.permute(0, 2, 1)  # patch_num b dim # [97, 512, 768]
+        #
         t2i_cls = self.fusion_module(text_emb_l_, img_emb_g).squeeze(-1)
 
-        # 
+        #
         return img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls
 
     def get_global_similarities(self, img_emb_g, text_emb_g):
@@ -302,7 +307,7 @@ class CARZeroDQNWOSA(nn.Module):
         all_imgs = torch.stack(all_imgs).to(device)
 
         return all_imgs
-    
+
     def process_single_img(self, paths):
 
         transform = builder.build_transformation(self.cfg, split="test")
@@ -314,8 +319,6 @@ class CARZeroDQNWOSA(nn.Module):
         img = transform(img)
 
         return img
-
-
 
     def _resize_img(self, img, scale):
         """

@@ -224,6 +224,7 @@ class MRM(nn.Module):
 
         return x_masked, mask, ids_restore
 
+    # @Note: Demo flow -- image encoder flow
     def image_encoder(self, x):
         # embed patches
         x = self.patch_embed(x)
@@ -292,6 +293,7 @@ class MRM(nn.Module):
         loss = (loss * mask).sum() / mask.sum()  # mean loss on removed patches
         return loss
 
+    # @Note: Demo flow -- image encoder flow
     def forward(self, imgs):
 
         # imgs = batch["image"]

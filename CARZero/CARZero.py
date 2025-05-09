@@ -1,4 +1,5 @@
 import os
+from matplotlib import pyplot as plt
 import torch
 import numpy as np
 import copy
@@ -401,7 +402,7 @@ def get_dqn_cos_similarities(CARZero_model, imgs, txts, similarity_type="both"):
     # else:
     #     return similarities.detach().cpu().numpy()
 
- 
+# @Note: Demo flow -- Main flow
 def get_dqn_similarities(CARZero_model, imgs, txts, similarity_type="both"):
     """Load a CARZero pretrained classification model
 
@@ -439,7 +440,10 @@ def get_dqn_similarities(CARZero_model, imgs, txts, similarity_type="both"):
     # get global and local image features
     with torch.no_grad():
         CARZero_model.eval()
+        # imgs dims: (batch_size, channel, width, height) -> label_img_emb_l (batch_size, seq_len, sqrt(d_model), sqrt(d_model)), label_img_emb_g (batch_size, seq_len )
         label_img_emb_l, label_img_emb_g = CARZero_model.image_encoder_forward(imgs)
+        
+        # query_emb_l (text_lalel_size, d_model, seq_len), query_emb_g (text_lalel_size, d_model)
         query_emb_l, query_emb_g, _ = CARZero_model.text_encoder_forward(
             txts["caption_ids"], txts["attention_mask"], txts["token_type_ids"]
         )
@@ -457,7 +461,7 @@ def get_dqn_similarities(CARZero_model, imgs, txts, similarity_type="both"):
 
             query_emb_l_ = query_emb_l.view(query_emb_l.size(0), query_emb_l.size(1), -1) 
 
-            query_emb_l_ = query_emb_l_.permute(0, 2, 1) #patch_num b dim # [97, 512, 768]
+            query_emb_l_ = query_emb_l_.permute(0, 2, 1) #patch_num b dim 
 
             # label_img_emb_l_ = CARZero_model.multi_modal_vision_proj(label_img_emb_l_)
             # label_img_emb_g_ = CARZero_model.multi_modal_vision_proj(label_img_emb_g_)
@@ -1160,6 +1164,7 @@ def dqn_shot_classification(CARZero_model, imgs, cls_txt_mapping):
     cls_similarity = get_dqn_similarities(
         CARZero_model, imgs, text_batch, similarity_type="both"
     )
+
     # cls_similarity, step_time = get_dqn_similarities_fast(
     #     CARZero_model, imgs, text_batch, similarity_type="both"
     # )

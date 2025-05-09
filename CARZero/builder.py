@@ -8,6 +8,7 @@ from . import datasets
 from . import loss
 from CARZero.constants import *
 
+
 def build_data_module(cfg):
     data_module = datasets.DATA_MODULES[cfg.data.dataset.lower()]
     return data_module(cfg)
@@ -19,9 +20,11 @@ def build_lightning_model(cfg, dm):
     module.dm = dm
     return module
 
+
 def build_CARZero_dqn_wo_self_atten_model(cfg):
     CARZero_model = models.CARZero_model_dqn_wo_self_atten.CARZeroDQNWOSA(cfg)
     return CARZero_model
+
 
 def build_CARZero_dqn_wo_self_atten_global_model(cfg):
     CARZero_model = models.CARZero_model_dqn_wo_self_atten_global.CARZeroDQNWOSAG(cfg)
@@ -34,14 +37,16 @@ def build_CARZero_dqn_wo_self_atten_gl_model(cfg):
 
 
 def build_CARZero_dqn_wo_self_atten_mlp_gl_model(cfg):
-    CARZero_model = models.CARZero_model_dqn_wo_self_atten_gl_mlp.CARZeroDQNWOSAGLMLP(cfg)
+    CARZero_model = models.CARZero_model_dqn_wo_self_atten_gl_mlp.CARZeroDQNWOSAGLMLP(
+        cfg
+    )
     return CARZero_model
-
 
 
 def build_fusion_module(cfg):
     fusion = models.fusion_module.Fusion(cfg)
     return fusion
+
 
 def build_dqn_module(cfg):
     fusion = models.dqn.TQN_Model(cfg)
@@ -63,7 +68,6 @@ def build_ram_extract_module():
     return extract
 
 
-
 def build_img_model(cfg):
     image_model = models.IMAGE_MODELS[cfg.phase.lower()]
     return image_model(cfg)
@@ -72,8 +76,10 @@ def build_img_model(cfg):
 def build_text_model(cfg):
     return models.text_model.BertEncoder(cfg)
 
+
 def build_text_simple_model(cfg):
     return models.text_model.BertEncoderSimple(cfg)
+
 
 def build_gpt_model(cfg):
     return models.gpt_model.EmbeddingFusing(cfg)
@@ -90,7 +96,10 @@ def build_optimizer(cfg, lr, model):
     # define optimizers
     if cfg.train.optimizer.name == "SGD":
         return torch.optim.SGD(
-            params, lr=lr, momentum=cfg.train.optimizer.momentum, weight_decay=cfg.train.optimizer.weight_decay
+            params,
+            lr=lr,
+            momentum=cfg.train.optimizer.momentum,
+            weight_decay=cfg.train.optimizer.weight_decay,
         )
     elif cfg.train.optimizer.name == "Adam":
         return torch.optim.Adam(
@@ -103,6 +112,7 @@ def build_optimizer(cfg, lr, model):
         return torch.optim.AdamW(
             params, lr=lr, weight_decay=cfg.train.optimizer.weight_decay
         )
+
 
 def build_scheduler(cfg, optimizer, dm=None):
 
@@ -165,6 +175,13 @@ def build_loss(cfg):
 
 
 def build_transformation(cfg, split):
+    """
+    Builds a torchvision transformation pipeline based on configuration settings and data split.
+
+    This function dynamically creates a sequence of image preprocessing and augmentation steps
+    depending on whether the input split is 'train' or not. It supports optional transforms
+    including cropping, flipping, affine transforms, color jittering, and normalization.
+    """
 
     t = []
     if split == "train":
@@ -206,7 +223,12 @@ def build_transformation(cfg, split):
         elif cfg.transforms.norm == "CXR_MAE":
             t.append(transforms.Normalize(mean=[0.4978], std=[0.2449]))
         elif cfg.transforms.norm == "CLIP":
-            t.append(transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711)))
+            t.append(
+                transforms.Normalize(
+                    mean=(0.48145466, 0.4578275, 0.40821073),
+                    std=(0.26862954, 0.26130258, 0.27577711),
+                )
+            )
         else:
             raise NotImplementedError("Normaliation method not implemented")
 

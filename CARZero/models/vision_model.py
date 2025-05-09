@@ -54,6 +54,7 @@ class ImageEncoder(nn.Module):
                 for param in self.model.parameters():
                     param.requires_grad = False
 
+    # @Note: Demo flow -- image encoder flow
     def forward(self, x, get_local=False):
         # --> fixed-size input: batch x 3 x 299 x 299
 
@@ -103,6 +104,7 @@ class ImageEncoder(nn.Module):
 
         return x, local_features
 
+    # @Note: Demo flow -- image encoder flow
     def vit_forward(self, x, extract_features=False):
         x, local_features = self.model(x)
         return x, local_features

@@ -45,6 +45,7 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
         )
         return text_emb_l, text_emb_g, sents
 
+    # @Note: Demo flow -- image encoder flow
     def image_encoder_forward(self, imgs):
         img_feat_g, img_emb_l = self.img_encoder(imgs, get_local=True)
         img_emb_g, img_emb_l = self.img_encoder.generate_embeddings(
@@ -53,7 +54,7 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
         return img_emb_l, img_emb_g
 
     def _calc_local_loss(self, img_emb_l, text_emb_l, sents):
-        
+
         # ipdb.set_trace()
         cap_lens = [
             len([w for w in sent if not w.startswith("[")]) + 1 for sent in sents
@@ -75,8 +76,10 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
     def _calc_ce_loss(self, cls):
         loss = self.ce_loss(cls)
         return loss
-    
-    def calc_loss(self, img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls):
+
+    def calc_loss(
+        self, img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls
+    ):
 
         # l_loss0, l_loss1, attn_maps = self._calc_local_loss(
         #     img_emb_l, text_emb_l, sents
@@ -104,29 +107,34 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
         text_emb_l, text_emb_g, sents = self.text_encoder_forward(
             x["caption_ids"], x["attention_mask"], x["token_type_ids"]
         )
-        
 
-        img_emb_l_ = img_emb_l.view(img_emb_l.size(0), img_emb_l.size(1), -1) # [512, 768, 14, 14] -> [512, 768, 196]
+        img_emb_l_ = img_emb_l.view(
+            img_emb_l.size(0), img_emb_l.size(1), -1
+        )  # [512, 768, 14, 14] -> [512, 768, 196]
 
-        img_emb_l_ = img_emb_l_.permute(0, 2, 1) #patch_num b dim # [196, 512, 768]
+        img_emb_l_ = img_emb_l_.permute(0, 2, 1)  # patch_num b dim # [196, 512, 768]
 
-        #image_features (batch_size,patch_num,dim)
-        #text_features (query_num,dim)
-        # 
+        # image_features (batch_size,patch_num,dim)
+        # text_features (query_num,dim)
+        #
 
-        i2t_cls = self.fusion_module(torch.cat([img_emb_g.unsqueeze(1) , img_emb_l_], dim=1) , text_emb_g).squeeze(-1)
+        i2t_cls = self.fusion_module(
+            torch.cat([img_emb_g.unsqueeze(1), img_emb_l_], dim=1), text_emb_g
+        ).squeeze(-1)
 
-        #pos=self.img_encoder.model.pos_embed[:, 1:, :].transpose(0,1)
+        # pos=self.img_encoder.model.pos_embed[:, 1:, :].transpose(0,1)
 
         # text to image
 
-        text_emb_l_ = text_emb_l.view(text_emb_l.size(0), text_emb_l.size(1), -1) 
+        text_emb_l_ = text_emb_l.view(text_emb_l.size(0), text_emb_l.size(1), -1)
 
-        text_emb_l_ = text_emb_l_.permute(0, 2, 1) #patch_num b dim # [97, 512, 768]
-        # 
-        t2i_cls = self.fusion_module(torch.cat([text_emb_g.unsqueeze(1) , text_emb_l_], dim=1) , img_emb_g).squeeze(-1)
+        text_emb_l_ = text_emb_l_.permute(0, 2, 1)  # patch_num b dim # [97, 512, 768]
+        #
+        t2i_cls = self.fusion_module(
+            torch.cat([text_emb_g.unsqueeze(1), text_emb_l_], dim=1), img_emb_g
+        ).squeeze(-1)
 
-        # 
+        #
         return img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls
 
     def get_global_similarities(self, img_emb_g, text_emb_g):
@@ -198,7 +206,30 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
             im.save(fullpath)
 
     def process_text(self, text, device):
+        """
+        Cleans, tokenizes, and encodes input text(s) into model-ready tensor representations.
 
+        Steps performed:
+        - Converts input to list if it's a single string.
+        - Replaces newlines with spaces and splits text into sentences.
+        - Removes non-ASCII characters and tokenizes using a regex tokenizer.
+        - Filters out very short or empty sentences.
+        - Reconstructs the cleaned text and tokenizes it using a pretrained tokenizer.
+        - Converts the tokenized output to PyTorch tensors and moves them to the given device.
+        - Optionally maps token IDs back to words using `self.ixtoword`.
+        - Calculates approximate caption lengths by excluding tokens that start with "[".
+
+        Args:
+            text (Union[str, List[str]]): Input text or list of texts to be processed.
+            device (torch.device): The device (e.g., CPU or GPU) to move output tensors to.
+
+        Returns:
+            dict: A dictionary containing:
+                - 'caption_ids' (Tensor): Token IDs suitable for input to a transformer model.
+                - 'attention_mask' (Tensor): Attention masks corresponding to the token IDs.
+                - 'token_type_ids' (Tensor): Token type segment IDs (useful for BERT-like models).
+                - 'cap_lens' (List[int]): Approximate length of each caption (excluding special tokens).
+        """
         if type(text) == str:
             text = [text]
 
@@ -239,6 +270,7 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
                 padding="max_length",
                 max_length=self.cfg.data.text.word_num,
             )
+
             text_tensors["sent"] = [
                 self.ixtoword[ix] for ix in text_tensors["input_ids"][0].tolist()
             ]
@@ -301,7 +333,7 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
         all_imgs = torch.stack(all_imgs).to(device)
 
         return all_imgs
-    
+
     def process_single_img(self, paths):
 
         transform = builder.build_transformation(self.cfg, split="test")
@@ -313,8 +345,6 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
         img = transform(img)
 
         return img
-
-
 
     def _resize_img(self, img, scale):
         """
