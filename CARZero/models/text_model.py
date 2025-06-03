@@ -97,6 +97,8 @@ class BertEncoder(nn.Module):
         # s = time.time()
         # aggregate intermetidate layers
         # ipdb.set_trace()
+        
+        # Intermediate layers often have better representations: Revisiting Few-sample BERT Fine-tuning (Zhang et al. 2021) 
         if self.last_n_layers > 1:
             all_embeddings = outputs[2]
             embeddings = torch.stack(

@@ -48,6 +48,8 @@ class CARZeroDQNWOSAGLMLP(nn.Module):
     # @Note: Demo flow -- image encoder flow
     def image_encoder_forward(self, imgs):
         img_feat_g, img_emb_l = self.img_encoder(imgs, get_local=True)
+
+        # Ignore if model is transformer
         img_emb_g, img_emb_l = self.img_encoder.generate_embeddings(
             img_feat_g, img_emb_l
         )

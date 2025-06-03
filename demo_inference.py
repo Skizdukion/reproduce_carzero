@@ -21,7 +21,7 @@ def obtain_simr_demo(image_path, text_path, demo_size=1000):
     lst = df["Path"].tolist()
     random.shuffle(lst)
     lst = lst[:demo_size]
-    bs = 32
+    bs = 1
     image_list = split_list(lst, bs)
 
     processed_txt = CARZero_model.process_class_prompts(cls_prompts, device)

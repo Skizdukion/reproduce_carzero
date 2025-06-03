@@ -11,7 +11,7 @@ import os
 from torch.nn.functional import sigmoid
 
 
-def prep_data(model: CARZeroDQNWOSAGLMLP, device):
+def prep_training_data_example(model: CARZeroDQNWOSAGLMLP, device):
     path = "/home/lpk/CARZero/MIMIC-CXR"
     csv_head = ["id", "text"]
     text_csv = pd.read_csv(f"{path}/text.csv", sep=";", names=csv_head)
@@ -45,7 +45,7 @@ def prep_data(model: CARZeroDQNWOSAGLMLP, device):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     CARZero_model = CARZero.load_CARZero(name="CARZero_vit_b_16", device=device)
-    x = prep_data(CARZero_model, device)
+    x = prep_training_data_example(CARZero_model, device)
     
     img_emb_l, img_emb_g, text_emb_l, text_emb_g, sents, i2t_cls, t2i_cls = (
         CARZero_model(x)

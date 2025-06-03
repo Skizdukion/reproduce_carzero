@@ -172,34 +172,49 @@ class TQN_Model(nn.Module):
     # @Note: Demo flow -- fusion
     def forward(
         self,
-        mem_features,
-        tgt_features,
+        k_v_features,  # Memory input (e.g., from encoder) → shape: [batch_size, seq_len, dim]
+        q_features,  # Query input (e.g., decoder input) → shape: [query_size: batch_size (in_training) flex_size (inferences), dim]
         pos=None,
         return_atten=False,
         inside_repeat=True,
     ):
-        # image_features (batch_size,patch_num,dim)
-        # text_features (query_num,dim)
-        batch_size = mem_features.shape[0]
-        mem_features = mem_features.transpose(0, 1)  # (patch_num,batch_size,dim)
-        if inside_repeat:
-            tgt_features = tgt_features.unsqueeze(1).repeat(
-                1, batch_size, 1
-            )  # (query_num,batch_size,dim)
-        mem_features = self.decoder_norm(mem_features)
-        tgt_features = self.decoder_norm(tgt_features)
 
-        # Q (X, seq_len, d_model), K (Y, d_model, seq_len) V (Y, seq_len, d_model)
-        
+        batch_size = k_v_features.shape[0]
+
+        # Transpose memory features to match TransformerDecoder input shape
+        # Resulting shape: [seq_len, batch_size, dim]
+        k_v_features = k_v_features.transpose(0, 1)
+
+        # Expand q_features
+        # Original q_features: [query_size, dim]
+        # After unsqueeze + repeat: [query_size, batch_size, dim]
+        if inside_repeat:
+            q_features = q_features.unsqueeze(1).repeat(1, batch_size, 1)
+
+        # Apply normalization to both query and memory features
+        # Helps with training stability
+        k_v_features = self.decoder_norm(k_v_features)
+        q_features = self.decoder_norm(q_features)
+
+        # Pass query and key/value features through the decoder
+        # Features shape: [query_size, batch_size, d_model]
+        # Attention map shape: [batch_size, query_size, key_len]
         features, atten_map = self.decoder(
-            tgt_features,
-            mem_features,
+            q_features, # [query_size, batch_size, dim]
+            k_v_features, # [seq_len, batch_size, dim]
             memory_key_padding_mask=None,
             pos=pos,
             query_pos=None,
         )
-        features = self.dropout_feas(features).transpose(0, 1)  # b,embed_dim
-        out = self.mlp_head(features)  # (batch_size, query_num)
+
+        # Apply dropout and transpose output to shape [batch_size, query_size, dim]
+        features = self.dropout_feas(features).transpose(0, 1)
+
+        # Project features to final output space
+        # Resulting shape: [batch_size, query_size]
+        out = self.mlp_head(features)
+
+        # Step 8: Optionally return attention map along with output
         if return_atten:
             return out, atten_map
         else:
